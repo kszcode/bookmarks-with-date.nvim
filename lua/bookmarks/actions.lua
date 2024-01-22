@@ -223,19 +223,30 @@ function M.loadBookmarks()
    end
 end
 
+function escape_string(str)
+   local escapes = {
+      ['\\'] = '\\\\',
+      ['"'] = '\\"',
+      ['\n'] = '\\n',
+      ['\r'] = '\\r',
+      ['\t'] = '\\t'
+   }
+   return str:gsub('["\\\n\r\t]', escapes)
+end
+
 function pretty_print_json(input, indent)
    indent = indent or 0
    local indent_str1 = string.rep(" ", indent)
    local indent_str2 = string.rep(" ", indent + 2)
    local output = "{\n"
    for k, v in pairs(input) do
-       output = output .. indent_str2 .. '"' .. k .. '": '
-       if type(v) == "table" then
-           output = output .. pretty_print_json(v, indent + 2)
-       else
-           output = output .. '"' .. tostring(v) .. '"'
-       end
-       output = output .. ",\n"
+      output = output .. indent_str2 .. '"' .. escape_string(k) .. '": '
+      if type(v) == "table" then
+         output = output .. pretty_print_json(v, indent + 2)
+      else
+         output = output .. '"' .. escape_string(tostring(v)) .. '"'
+      end
+      output = output .. ",\n"
    end
    output = output .. indent_str1 .. "}"
    return output
