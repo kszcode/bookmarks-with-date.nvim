@@ -228,7 +228,12 @@ function M.saveBookmarks()
    -- TBD: figure out how to delete a bookmark
    -- M.loadBookmarks()
    log_to_file("nvim:bookmarks:actions.lua saveBookmarks called")
-   local data = vim.fn.json_encode(config.cache,  { indent = true })
+   local status, data = pcall(vim.fn.json_encode, config.cache, { indent = true })
+   if not status then
+      log_to_file("nvim:bookmarks:actions.lua saveBookmarks error: " .. data)
+      log_to_file("nvim:bookmarks:actions.lua saveBookmarks status: " .. status)
+      return
+   end
    log_to_file("nvim:bookmarks:actions.lua saveBookmarks data: " .. data)
    if config.marks ~= data then
       utils.write_file(config.save_file, data)
