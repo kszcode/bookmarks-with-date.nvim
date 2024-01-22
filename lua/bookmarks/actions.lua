@@ -198,7 +198,7 @@ function M.loadBookmarks()
          else
             config.cache = newData
          end
-
+         
          config.marks = data
       end)
    end
@@ -207,10 +207,11 @@ end
 function M.saveBookmarks()
    -- load it first to make sure we don't overwrite changes
    -- TBD: figure out how to delete a bookmark
-   M.loadBookmarks()
-   local data = vim.fn.json_encode(config.cache,  { indent = 4 })
+   -- M.loadBookmarks()
+   local data = vim.fn.json_encode(config.cache,  { indent = true })
    if config.marks ~= data then
       utils.write_file(config.save_file, data)
+      utils.write_file(config.save_file .. ".v2", data)
    end
 end
 
