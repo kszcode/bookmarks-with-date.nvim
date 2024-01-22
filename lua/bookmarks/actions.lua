@@ -254,7 +254,7 @@ end
 function M.saveBookmarks()
   -- load it first to make sure we don't overwrite changes
   -- TBD: figure out how to delete a bookmark
-  -- M.loadBookmarks()
+  M.loadBookmarks()
   log_to_file("nvim:bookmarks:actions.lua saveBookmarks called")
   local status, data = pcall(pretty_print_json, config.cache)
   if not status then
