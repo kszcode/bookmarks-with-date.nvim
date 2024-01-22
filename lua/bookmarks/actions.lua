@@ -223,22 +223,40 @@ function M.loadBookmarks()
    end
 end
 
+function pretty_print_json(input, indent)
+   indent = indent or 0
+   local indent_str1 = string.rep(" ", indent)
+   local indent_str2 = string.rep(" ", indent + 2)
+   local output = "{\n"
+   for k, v in pairs(input) do
+       output = output .. indent_str2 .. '"' .. k .. '": '
+       if type(v) == "table" then
+           output = output .. pretty_print_json(v, indent + 2)
+       else
+           output = output .. '"' .. tostring(v) .. '"'
+       end
+       output = output .. ",\n"
+   end
+   output = output .. indent_str1 .. "}"
+   return output
+end
+
 function M.saveBookmarks()
-   -- load it first to make sure we don't overwrite changes
-   -- TBD: figure out how to delete a bookmark
-   -- M.loadBookmarks()
-   log_to_file("nvim:bookmarks:actions.lua saveBookmarks called")
-   local status, data = pcall(vim.fn.json_encode, config.cache, { indent = true })
-   if not status then
-      log_to_file("nvim:bookmarks:actions.lua saveBookmarks error: " .. data)
-      log_to_file("nvim:bookmarks:actions.lua saveBookmarks status: " .. status)
-      return
-   end
-   log_to_file("nvim:bookmarks:actions.lua saveBookmarks data: " .. data)
-   if config.marks ~= data then
-      utils.write_file(config.save_file, data)
-      utils.write_file(config.save_file .. ".v2", data)
-   end
+  -- load it first to make sure we don't overwrite changes
+  -- TBD: figure out how to delete a bookmark
+  -- M.loadBookmarks()
+  log_to_file("nvim:bookmarks:actions.lua saveBookmarks called")
+  local status, data = pcall(pretty_print_json, config.cache)
+  if not status then
+     log_to_file("nvim:bookmarks:actions.lua saveBookmarks error: " .. data)
+     log_to_file("nvim:bookmarks:actions.lua saveBookmarks status: " .. tostring(status))
+     return
+  end
+  log_to_file("nvim:bookmarks:actions.lua saveBookmarks data: " .. data)
+  if config.marks ~= data then
+     utils.write_file(config.save_file, data)
+     utils.write_file(config.save_file .. ".v2", data)
+  end
 end
 
 return M
