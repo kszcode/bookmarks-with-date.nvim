@@ -238,18 +238,17 @@ function pretty_print_json(input, indent)
    indent = indent or 0
    local indent_str1 = string.rep(" ", indent)
    local indent_str2 = string.rep(" ", indent + 2)
-   local output = "{\n"
+   local output = {}
    for k, v in pairs(input) do
-      output = output .. indent_str2 .. '"' .. escape_string(k) .. '": '
+      local kv_pair = indent_str2 .. '"' .. escape_string(k) .. '": '
       if type(v) == "table" then
-         output = output .. pretty_print_json(v, indent + 2)
+         kv_pair = kv_pair .. pretty_print_json(v, indent + 2)
       else
-         output = output .. '"' .. escape_string(tostring(v)) .. '"'
+         kv_pair = kv_pair .. '"' .. escape_string(tostring(v)) .. '"'
       end
-      output = output .. ",\n"
+      table.insert(output, kv_pair)
    end
-   output = output .. indent_str1 .. "}"
-   return output
+   return indent_str1 .. "{\n" .. table.concat(output, ",\n") .. "\n" .. indent_str1 .. "}"
 end
 
 function M.saveBookmarks()
