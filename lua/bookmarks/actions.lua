@@ -189,7 +189,27 @@ M.refresh = function(bufnr)
    end
 end
 
+local function log_to_file(message)
+    -- local home_folder = vim.fcibn.expand("~")
+    local home_folder = vim.fn.getenv("HOME") or vim.fn.getenv("USERPROFILE")
+    local log_file_path = home_folder .. "/Downloads/nvim-logfile.log" -- Change this to your desired log path
+    local current_folder = vim.fn.getcwd()
+    -- Get the caller file and line number (2 levels up in the stack)
+    local info = debug.getinfo(2, "Sl")
+    local caller_info = string.format("%s:%d", info.short_src, info.currentline)
+    -- Construct the full log message
+    local full_message = string.format("[%s] [%s] %s - %s", os.date("%Y-%m-%d %H:%M:%S"), current_folder, caller_info, message)
+    local file = io.open(log_file_path, "a")
+    if file then
+        file:write(full_message .. "\n")
+        file:close()
+    end
+end
+-- Call the function to log a message
+log_to_file("nvim:bookmarks:actions.lua initialized")
+
 function M.loadBookmarks()
+   log_to_file("nvim:bookmarks:actions.lua loadBookmarks called")
    if utils.path_exists(config.save_file) then
       utils.read_file(config.save_file, function(data)
          local newData = vim.json.decode(data)
@@ -198,7 +218,6 @@ function M.loadBookmarks()
          else
             config.cache = newData
          end
-         
          config.marks = data
       end)
    end
@@ -208,6 +227,7 @@ function M.saveBookmarks()
    -- load it first to make sure we don't overwrite changes
    -- TBD: figure out how to delete a bookmark
    -- M.loadBookmarks()
+   log_to_file("nvim:bookmarks:actions.lua saveBookmarks called")
    local data = vim.fn.json_encode(config.cache,  { indent = true })
    if config.marks ~= data then
       utils.write_file(config.save_file, data)
