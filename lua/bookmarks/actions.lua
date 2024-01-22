@@ -229,6 +229,7 @@ function M.saveBookmarks()
    -- M.loadBookmarks()
    log_to_file("nvim:bookmarks:actions.lua saveBookmarks called")
    local data = vim.fn.json_encode(config.cache,  { indent = true })
+   log_to_file("nvim:bookmarks:actions.lua saveBookmarks data: " .. data)
    if config.marks ~= data then
       utils.write_file(config.save_file, data)
       utils.write_file(config.save_file .. ".v2", data)
