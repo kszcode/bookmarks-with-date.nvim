@@ -193,13 +193,13 @@ function M.loadBookmarks()
    if utils.path_exists(config.save_file) then
       utils.read_file(config.save_file, function(data)
          local newData = vim.json.decode(data)
-         if config.cache and config.marks then
+         if config.cache then
             config.cache = vim.tbl_deep_extend("force", config.cache, newData)
-            config.marks = vim.tbl_deep_extend("force", config.marks, newData)
          else
             config.cache = newData
-            config.marks = newData
          end
+
+         config.marks = data
       end)
    end
 end
@@ -208,7 +208,7 @@ function M.saveBookmarks()
    -- load it first to make sure we don't overwrite changes
    -- TBD: figure out how to delete a bookmark
    M.loadBookmarks()
-   local data = vim.fn.json_encode(config.cache)
+   local data = vim.fn.json_encode(config.cache,  { indent = 4 })
    if config.marks ~= data then
       utils.write_file(config.save_file, data)
    end
