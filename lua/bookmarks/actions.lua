@@ -47,7 +47,7 @@ local function updateBookmarks(bufnr, lnum, mark, ann)
         if ann then
             bookmark.annotation = ann
         end
-      marks[string.format("%05d", lnum)] = bookmark
+        marks[string.format("%05d", lnum)] = bookmark
     end
     data[filepath] = marks
 end
@@ -174,7 +174,7 @@ M.bookmark_list = function()
             local a = v.annotation or v.a or ""
             local datetime = v.datetime or ""
             -- local text = datetime .. "->" .. a .. " -> " .. m
-            local text = datetime 
+            local text = datetime
             if a ~= "" then
                 text = text .. " -a> " .. a
             end
