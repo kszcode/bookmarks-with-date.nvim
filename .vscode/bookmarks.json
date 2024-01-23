@@ -4,12 +4,12 @@
 			"path": "lua/bookmarks/actions.lua",
 			"bookmarks": [
 				{
-					"line": 212,
+					"line": 215,
 					"column": 9,
 					"label": ""
 				},
 				{
-					"line": 261,
+					"line": 264,
 					"column": 2,
 					"label": ""
 				}
