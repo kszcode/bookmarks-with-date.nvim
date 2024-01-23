@@ -44,7 +44,7 @@ local function bookmark(opts)
       local line_info = { entry.lnum, "TelescopeResultsLineNr" }
       return displayer {
          line_info,
-         entry.text:gsub(".* | ", ""),
+         (entry.text or ""):gsub(".* | ", ""),
          utils.path_smart(entry.filename), -- or path_tail
       }
    end
@@ -57,7 +57,7 @@ local function bookmark(opts)
                valid = true,
                value = entry,
                display = display,
-               ordinal = entry.filename .. entry.text,
+               ordinal = entry.filename .. (entry.text or ""),
                filename = entry.filename,
                lnum = entry.lnum,
                col = 1,
