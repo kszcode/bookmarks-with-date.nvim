@@ -47,7 +47,7 @@ local function updateBookmarks(bufnr, lnum, mark, ann)
         if ann then
             bookmark.annotation = ann
         end
-        marks[tostring(lnum)] = bookmark
+      marks[string.format("%05d", lnum)] = bookmark
     end
     data[filepath] = marks
 end
@@ -157,14 +157,38 @@ end
 M.bookmark_list = function()
     local allmarks = config.cache.data
     local marklist = {}
-    for k, ma in pairs(allmarks) do
-        if utils.path_exists(k) == false then
+
+    -- Remove invalid file paths from allmarks
+    for k, _ in pairs(allmarks) do
+        if not utils.path_exists(k) then
             allmarks[k] = nil
         end
+    end
+
+    -- Create marklist with filename, line number, and text
+    for k, ma in pairs(allmarks) do
         for l, v in pairs(ma) do
-            table.insert(marklist, { filename = k, lnum = l, text = v.m .. "|" .. (v.a or "") })
+            local m = v.mark or v.m or ""
+            -- remove the surrounding white space
+            m = string.gsub(m, "^%s*(.-)%s*$", "%1")
+            local a = v.annotation or v.a or ""
+            local datetime = v.datetime or ""
+            -- local text = datetime .. "->" .. a .. " -> " .. m
+            local text = datetime 
+            if a ~= "" then
+                text = text .. " -a> " .. a
+            end
+            text = text .. " -m> " .. m
+            table.insert(marklist, { filename = k, lnum = l, text = text })
         end
     end
+
+    -- sort the marklist by text in desc order
+    table.sort(marklist, function(a, b)
+        return a.text > b.text
+    end)
+
+    -- Set the quickfix list with marklist
     utils.setqflist(marklist)
 end
 
@@ -250,7 +274,13 @@ function pretty_print_json(input, indent)
     local indent_str1 = string.rep(" ", indent)
     local indent_str2 = string.rep(" ", indent + 2)
     local output = {}
-    for k, v in pairs(input) do
+    local sorted_keys = {}
+    for k, _ in pairs(input) do
+        table.insert(sorted_keys, k)
+    end
+    table.sort(sorted_keys)
+    for _, k in ipairs(sorted_keys) do
+        local v = input[k]
         local kv_pair = indent_str2 .. '"' .. escape_string(k) .. '": '
         if type(v) == "table" then
             kv_pair = kv_pair .. pretty_print_json(v, indent + 2)
