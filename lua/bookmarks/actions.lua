@@ -47,8 +47,8 @@ local function updateBookmarks(bufnr, lnum, mark, ann)
         if ann then
             bookmark.annotation = ann
         end
-        marks[string.format("%05d", lnum)] = bookmark
-    end
+            marks[string.format("%5d", lnum)] = bookmark
+        end
     data[filepath] = marks
 end
 
