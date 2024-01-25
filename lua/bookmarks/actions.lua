@@ -236,14 +236,14 @@ local function log_to_file(message)
     end
 end
 -- Call the function to log a message
-log_to_file("nvim:bookmarks:actions.lua initialized")
+-- log_to_file("nvim:bookmarks:actions.lua initialized")
 
 function M.loadBookmarks()
     print("nvim:bookmarks:actions.lua loadBookmarks called")
     -- send message to Noice about this
-    log_to_file("nvim:bookmarks:actions.lua loadBookmarks called v3.1")
+    -- log_to_file("nvim:bookmarks:actions.lua loadBookmarks called v3.1")
     vim.notify("loadBookmarks called", vim.log.levels.INFO)
-    log_to_file("nvim:bookmarks:actions.lua loadBookmarks called v3.2")
+    -- log_to_file("nvim:bookmarks:actions.lua loadBookmarks called v3.2")
 
     if utils.path_exists(config.save_file) then
         utils.read_file(config.save_file, function(data)
@@ -296,7 +296,7 @@ function M.saveBookmarks()
     -- load it first to make sure we don't overwrite changes
     -- TBD: figure out how to delete a bookmark
     M.loadBookmarks()
-    log_to_file("nvim:bookmarks:actions.lua saveBookmarks called")
+    -- log_to_file("nvim:bookmarks:actions.lua saveBookmarks called")
     local status, data = pcall(pretty_print_json, config.cache)
     if not status then
         log_to_file("nvim:bookmarks:actions.lua saveBookmarks error: " .. data)
