@@ -16,39 +16,62 @@ M.detach = function(bufnr, keep_signs)
     end
 end
 
+-- This function updates the bookmarks for a given buffer.
+-- @param bufnr: The buffer number.
+-- @param lnum: The line number.
+-- @param mark: The mark to be added.
+-- @param ann: The annotation to be added.
 local function updateBookmarks(bufnr, lnum, mark, ann)
+    -- Get the real path of the file associated with the buffer.
     local filepath = uv.fs_realpath(api.nvim_buf_get_name(bufnr))
+
+    -- If the filepath is nil, exit the function.
     if filepath == nil then
         return
     end
+
+    -- Get the data from the cache.
     local data = config.cache["data"]
+
+    -- Get the marks for the file.
     local marks = data[filepath]
+
+    -- Initialize a flag to check if a new mark is inserted.
     local isIns = false
+
+    -- If the line number is -1, clear the marks and set the flag to true.
     if lnum == -1 then
         marks = nil
         isIns = true
-        -- check buffer auto_save to file
     end
+
+    -- Iterate over the marks.
     for k, _ in pairs(marks or {}) do
+        -- If the mark matches the line number, set the flag to true.
         if k == string.format("%05d", lnum) then
             isIns = true
+            -- If the mark is empty, remove it.
             if mark == "" then
                 marks[k] = nil
             end
             break
         end
     end
-    if isIns == false or ann then
-        marks = marks or {}
-        local bookmark = {
-            mark = mark,
-            datetime = os.date("%Y-%m-%d %H:%M:%S") -- Insert datetime
-        }
-        if ann then
-            bookmark.annotation = ann
-        end
-            marks[string.format("%05d", lnum)] = bookmark
-        end
+
+    -- If the flag is false or an annotation is provided, create a new mark.
+    -- if isIns == false or ann then
+    marks = marks or {}
+    local bookmark = {
+        mark = mark,
+        datetime = os.date("%Y-%m-%d %H:%M:%S")     -- Insert datetime
+    }
+    if ann then
+        bookmark.annotation = ann
+    end
+    marks[string.format("%05d", lnum)] = bookmark
+    -- end
+
+    -- Update the marks for the file in the data.
     data[filepath] = marks
 end
 
@@ -240,14 +263,30 @@ end
 -- Call the function to log a message
 -- log_to_file("nvim:bookmarks:actions.lua initialized")
 
+function M.deep_extend_keep(target, source)
+    for key, value in pairs(source) do
+        if type(value) == "table" then
+            if type(target[key] or false) == "table" then
+                M.deep_extend_keep(target[key] or {}, source[key] or {})
+            else
+                target[key] = value
+            end
+        else
+            if target[key] == nil then
+                target[k] = v
+            end
+        end
+    end
+    return target
+end
+
 function M.loadBookmarks()
     -- vim.notify("M.loadBookmarks called INFO notify", vim.log.levels.INFO)
-
     if utils.path_exists(config.save_file) then
         utils.read_file(config.save_file, function(data)
             local newData = vim.json.decode(data)
             if config.cache then
-                config.cache = vim.tbl_deep_extend("force", config.cache, newData)
+                config.cache = M.deep_extend_keep(config.cache, newData)
             else
                 config.cache = newData
             end
