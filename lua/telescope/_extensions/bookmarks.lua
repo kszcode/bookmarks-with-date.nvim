@@ -11,14 +11,14 @@ local conf = require("telescope.config").values
 local config = require("bookmarks.config").config
 local utils = require "telescope.utils"
 
-local function get_text(annotation)
-    local prefix = string.sub(annotation, 1, 2)
-    local ret = config.keywords[prefix]
-    if ret == nil then
-        ret = config.signs.ann.text .. " "
-    end
-    return ret .. annotation
-end
+-- local function get_text(annotation)
+--     local prefix = string.sub(annotation, 1, 2)
+--     local ret = config.keywords[prefix]
+--     if ret == nil then
+--         ret = config.signs.ann.text .. " "
+--     end
+--     return ret .. annotation
+-- end
 
 -- This function generates a list of bookmarks and displays them using the Telescope plugin.
 -- It takes an optional 'opts' table as a parameter.
