@@ -50,7 +50,7 @@ local function handleBookmarksList(options)
             if a ~= "" then
                 combinedText = combinedText .. " -a> " .. a
             end
-            combinedText = combinedText .. " -m> " .. m
+            combinedText = combinedText .. " =m> " .. m
             table.insert(bookmarkList, {
                 filename = filename,
                 lnum = tonumber(lineNumber, 10),

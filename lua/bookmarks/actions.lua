@@ -179,7 +179,7 @@ M.bookmark_list = function()
                 text = text .. " -a> " .. a
             end
             text = text .. " -m> " .. m
-            table.insert(marklist, { filename = k, lnum = l, text = text })
+            table.insert(marklist, { filename = k, lnum = tonumber(l, 10), text = text })
         end
     end
 
