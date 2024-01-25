@@ -77,8 +77,8 @@ M.bookmark_toggle = function()
         local line = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
         updateBookmarks(bufnr, lnum, line)
     end
-    -- M.saveBookmarks()
-    -- M.loadBookmarks()
+    M.saveBookmarks()
+    M.loadBookmarks()
 end
 
 M.bookmark_clean = function()
@@ -241,14 +241,7 @@ end
 -- log_to_file("nvim:bookmarks:actions.lua initialized")
 
 function M.loadBookmarks()
-    -- vim.api.nvim_out_write("M.loadBookmarks called v2024-01-25")
-    -- run an echo command with the same message
-    -- vim.api.nvim_command("echo 'M.loadBookmarks called echo'")
-
-    -- send message to Noice about this
-    -- log_to_file("nvim:bookmarks:actions.lua loadBookmarks called v3.1")
-    vim.notify("M.loadBookmarks called INFO notify", vim.log.levels.INFO)
-    -- log_to_file("nvim:bookmarks:actions.lua loadBookmarks called v3.2")
+    -- vim.notify("M.loadBookmarks called INFO notify", vim.log.levels.INFO)
 
     if utils.path_exists(config.save_file) then
         utils.read_file(config.save_file, function(data)
@@ -300,8 +293,6 @@ end
 function M.saveBookmarks()
     -- load it first to make sure we don't overwrite changes
     M.loadBookmarks()
-    -- log_to_file("nvim:bookmarks:actions.lua saveBookmarks called")
-    -- vim.api.nvim_out_write("M.saveBookmarks called")
     vim.notify("M.saveBookmarks called INFO notify", vim.log.levels.INFO)
 
     local status, data = pcall(pretty_print_json, config.cache)

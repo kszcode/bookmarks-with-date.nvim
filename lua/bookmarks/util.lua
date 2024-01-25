@@ -91,31 +91,24 @@ function M.prompt_yes_no(prompt, callback, prompt_no_cr)
 end
 
 M.write_file = function(path, content)
-   uv.fs_open(path, "w", 438, function(open_err, fd)
-      assert(not open_err, open_err)
-      uv.fs_write(fd, content, -1, function(write_err)
-         assert(not write_err, write_err)
-         uv.fs_close(fd, function(close_err)
-            assert(not close_err, close_err)
-         end)
-      end)
-   end)
+   local file = io.open(path, "w")
+   if file then
+      file:write(content)
+      file:close()
+   else
+      error("Could not open file for writing: " .. path)
+   end
 end
 
 M.read_file = function(path, callback)
-   uv.fs_open(path, "r", 438, function(err, fd)
-      assert(not err, err)
-      uv.fs_fstat(fd, function(err, stat)
-         assert(not err, err)
-         uv.fs_read(fd, stat.size, 0, function(err, data)
-            assert(not err, err)
-            uv.fs_close(fd, function(err)
-               assert(not err, err)
-               callback(data)
-            end)
-         end)
-      end)
-   end)
+   local file = io.open(path, "r")
+   if file then
+      local content = file:read("*all")
+      file:close()
+      callback(content)
+   else
+      error("Could not open file for reading: " .. path)
+   end
 end
 
 function M.warn(...)
