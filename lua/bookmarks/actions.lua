@@ -366,7 +366,6 @@ function M.saveBookmarks()
     -- load it first to make sure we don't overwrite changes
     M.loadBookmarks()
     vim.notify("M.saveBookmarks called INFO notify", vim.log.levels.INFO)
-
     local status, data = pcall(pretty_print_json, config.cache)
     if not status then
         log_to_file("nvim:bookmarks:actions.lua saveBookmarks error: " .. data)
