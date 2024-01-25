@@ -72,7 +72,7 @@ M.bookmark_toggle = function()
     local isExt = signs:add(bufnr, signlines)
     if isExt then
         signs:remove(bufnr, lnum)
-        updateBookmarks(bufnr, lnum, "")
+        updateBookmarks(bufnr, lnum, "--deleted--")
     else
         local line = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
         updateBookmarks(bufnr, lnum, line)
