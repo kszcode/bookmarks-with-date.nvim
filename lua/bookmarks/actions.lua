@@ -6,6 +6,8 @@ local api = vim.api
 local current_buf = api.nvim_get_current_buf
 local M = {}
 local signs
+local DELETED_MARK = "--deleted--"
+
 M.setup = function()
     signs = Signs.new(config.signs)
 end
@@ -14,6 +16,46 @@ M.detach = function(bufnr, keep_signs)
     if not keep_signs then
         signs:remove(bufnr)
     end
+end
+
+-- This function checks if the mark for a given line in a given buffer is equal to --deleted--.
+-- @param bufnr: The buffer number.
+-- @param lnum: The line number.
+local function isLineDeleted(bufnr, lnum)
+    -- Get the real path of the file associated with the buffer.
+    local filepath = uv.fs_realpath(api.nvim_buf_get_name(bufnr))
+
+    -- If the filepath is nil, return false.
+    if filepath == nil then
+        return false
+    end
+
+    -- Get the data from the cache.
+    local data = config.cache["data"]
+
+    -- Get the marks for the file.
+    local marks = data[filepath]
+
+    -- If there are no marks for the file, return false.
+    if marks == nil then
+        return false
+    end
+
+    -- Get the mark for the line.
+    local mark = marks[string.format("%05d", lnum)]
+
+    -- If there is no mark for the line, return false.
+    if mark == nil then
+        return false
+    end
+
+    -- If the mark for the line is equal to --deleted--, return true.
+    if mark.mark == DELETED_MARK then
+        return true
+    end
+
+    -- Otherwise, return false.
+    return false
 end
 
 -- This function updates the bookmarks for a given buffer.
@@ -36,27 +78,17 @@ local function updateBookmarks(bufnr, lnum, mark, ann)
     -- Get the marks for the file.
     local marks = data[filepath]
 
-    -- Initialize a flag to check if a new mark is inserted.
-    local isIns = false
-
-    -- If the line number is -1, clear the marks and set the flag to true.
-    if lnum == -1 then
-        marks = nil
-        isIns = true
-    end
-
-    -- Iterate over the marks.
-    for k, _ in pairs(marks or {}) do
-        -- If the mark matches the line number, set the flag to true.
-        if k == string.format("%05d", lnum) then
-            isIns = true
-            -- If the mark is empty, remove it.
-            if mark == "" then
-                marks[k] = nil
-            end
-            break
-        end
-    end
+    -- -- Iterate over the marks.
+    -- for k, _ in pairs(marks or {}) do
+    --     -- If the mark matches the line number, set the flag to true.
+    --     if k == string.format("%05d", lnum) then
+    --         -- If the mark is empty, remove it.
+    --         if mark == "" then
+    --             marks[k] = nil
+    --         end
+    --         break
+    --     end
+    -- end
 
     -- If the flag is false or an annotation is provided, create a new mark.
     -- if isIns == false or ann then
@@ -93,9 +125,10 @@ M.bookmark_toggle = function()
         lnum = lnum,
     } }
     local isExt = signs:add(bufnr, signlines)
-    if isExt then
+    local isDeleted = isLineDeleted(bufnr, lnum)
+    if isExt and not isDeleted then
         signs:remove(bufnr, lnum)
-        updateBookmarks(bufnr, lnum, "--deleted--")
+        updateBookmarks(bufnr, lnum, DELETED_MARK)
     else
         local line = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1]
         updateBookmarks(bufnr, lnum, line)
