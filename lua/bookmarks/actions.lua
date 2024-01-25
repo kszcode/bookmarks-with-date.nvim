@@ -366,15 +366,21 @@ function M.saveBookmarks()
     -- load it first to make sure we don't overwrite changes
     M.loadBookmarks()
     vim.notify("M.saveBookmarks called INFO notify", vim.log.levels.INFO)
-    local status, data = pcall(pretty_print_json, config.cache)
-    if not status then
-        log_to_file("nvim:bookmarks:actions.lua saveBookmarks error: " .. data)
-        log_to_file("nvim:bookmarks:actions.lua saveBookmarks status: " .. tostring(status))
-        return
+    local data = config.cache
+
+    -- Iterate over each bookmark in the data
+    for i, bookmark in ipairs(data) do
+        -- If the bookmark is marked as deleted and it was not deleted today
+        if bookmark.mark == DELETED_MARK and bookmark.deleted_date ~= os.date("%Y-%m-%d") then
+            -- Remove the bookmark from the data
+            table.remove(data, i)
+        end
     end
-    -- log_to_file("nvim:bookmarks:actions.lua saveBookmarks data: " .. data)
-    if config.marks ~= data then
-        utils.write_file(config.save_file, data)
+
+    local newData = pretty_print_json(data)
+
+    if config.marks ~= newData then
+        utils.write_file(config.save_file, newData)
     end
 end
 
