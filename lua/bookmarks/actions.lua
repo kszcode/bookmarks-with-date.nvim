@@ -30,7 +30,7 @@ local function updateBookmarks(bufnr, lnum, mark, ann)
         -- check buffer auto_save to file
     end
     for k, _ in pairs(marks or {}) do
-        if k == tostring(lnum) then
+        if k == string.format("%05d", lnum) then
             isIns = true
             if mark == "" then
                 marks[k] = nil
@@ -47,7 +47,7 @@ local function updateBookmarks(bufnr, lnum, mark, ann)
         if ann then
             bookmark.annotation = ann
         end
-            marks[string.format("%5d", lnum)] = bookmark
+            marks[string.format("%05d", lnum)] = bookmark
         end
     data[filepath] = marks
 end
@@ -89,7 +89,7 @@ M.bookmark_line = function(lnum, bufnr)
     bufnr = bufnr or current_buf()
     local file = uv.fs_realpath(api.nvim_buf_get_name(bufnr))
     local marks = config.cache["data"][file] or {}
-    return lnum and marks[tostring(lnum)] or marks
+    return lnum and marks[string.format("%05d", lnum)] or marks
 end
 
 M.bookmark_ann = function()
@@ -118,7 +118,7 @@ local jump_line = function(prev)
     local marks = M.bookmark_line()
     local small, big = {}, {}
     for k, _ in pairs(marks) do
-        k = tonumber(k)
+        k = tonumber(k, 10)
         if k < lnum then
             table.insert(small, k)
         elseif k > lnum then
@@ -204,7 +204,7 @@ M.refresh = function(bufnr)
         for k, v in pairs(marks) do
             local ma = {
                 type = v.a and "ann" or "add",
-                lnum = tonumber(k),
+                lnum = tonumber(k, 10),
             }
             local pref = string.sub(v.a or "", 1, 2)
             local text = config.keywords[pref]

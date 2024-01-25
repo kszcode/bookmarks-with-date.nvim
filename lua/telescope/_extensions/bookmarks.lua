@@ -53,7 +53,7 @@ local function handleBookmarksList(options)
             combinedText = combinedText .. " -m> " .. m
             table.insert(bookmarkList, {
                 filename = filename,
-                lnum = tonumber(lineNumber),
+                lnum = tonumber(lineNumber, 10),
                 text = combinedText,
             })
         end
