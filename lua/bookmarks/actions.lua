@@ -78,6 +78,20 @@ local function updateBookmarks(bufnr, lnum, mark, ann)
     -- Get the marks for the file.
     local marks = data[filepath]
 
+    -- -- Iterate over the marks.
+    -- for k, _ in pairs(marks or {}) do
+    --     -- If the mark matches the line number, set the flag to true.
+    --     if k == string.format("%05d", lnum) then
+    --         -- If the mark is empty, remove it.
+    --         if mark == "" then
+    --             marks[k] = nil
+    --         end
+    --         break
+    --     end
+    -- end
+
+    -- If the flag is false or an annotation is provided, create a new mark.
+    -- if isIns == false or ann then
     marks = marks or {}
     local bookmark = {
         mark = mark,
@@ -89,6 +103,7 @@ local function updateBookmarks(bufnr, lnum, mark, ann)
     marks[string.format("%05d", lnum)] = bookmark
     -- end
 
+    -- Update the marks for the file in the data.
     data[filepath] = marks
 end
 
@@ -278,8 +293,6 @@ local function log_to_file(message)
         file:close()
     end
 end
--- Call the function to log a message
--- log_to_file("nvim:bookmarks:actions.lua initialized")
 
 function M.deep_extend_keep(target, source)
     for key, value in pairs(source) do
@@ -291,7 +304,7 @@ function M.deep_extend_keep(target, source)
             end
         else
             if target[key] == nil then
-                target[key] = value
+                target[k] = v
             end
         end
     end
@@ -304,6 +317,7 @@ function M.loadBookmarks()
         utils.read_file(config.save_file, function(data)
             local newData = vim.json.decode(data)
             if config.cache then
+                -- call deep_extend_keep to keep the existing data in the buffer (so deleted marks are not lost)
                 config.cache = M.deep_extend_keep(config.cache, newData)
             else
                 config.cache = newData
