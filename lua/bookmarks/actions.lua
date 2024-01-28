@@ -363,17 +363,35 @@ local function pretty_print_json(input, indent)
 end
 
 function M.saveBookmarks()
+    if not config.cache then
+        vim.notify("M.saveBookmarks Error: config.cache is not initialized", vim.log.levels.ERROR)
+        return
+    end
+
     -- load it first to make sure we don't overwrite changes
     M.loadBookmarks()
-    vim.notify("M.saveBookmarks called INFO notify", vim.log.levels.INFO)
+    -- vim.notify("M.saveBookmarks called INFO notify", vim.log.levels.INFO)
+
     local data = config.cache
 
-    -- Iterate over each bookmark in the data
-    for i, bookmark in ipairs(data) do
-        -- If the bookmark is marked as deleted and it was not deleted today
-        if bookmark.mark == DELETED_MARK and bookmark.deleted_date ~= os.date("%Y-%m-%d") then
-            -- Remove the bookmark from the data
-            table.remove(data, i)
+    -- vim.notify("Debug data:" .. pretty_print_json(data), vim.log.levels.INFO)
+
+    -- Iterate over each file in the data
+    for file, bookmarks in pairs(data.data) do
+        -- vim.notify(string.format("M.saveBookmarks file: %s", file), vim.log.levels.INFO)
+        -- vim.notify(string.format("M.saveBookmarks bookmarks: %s", vim.inspect(bookmarks)), vim.log.levels.INFO)
+        -- Iterate over each bookmark in reverse order (to avoid index shifting issues)
+        local i = #bookmarks
+        -- vim.notify(string.format("M.saveBookmarks found i bookmarks: %s", vim.inspect(i)), vim.log.levels.INFO)
+        while i > 0 do
+            local bookmark = bookmarks[i]
+            -- vim.notify(string.format("M.saveBookmarks bookmark: %s", vim.inspect(bookmark)), vim.log.levels.INFO)
+            if bookmark and bookmark.mark == "--deleted--" and bookmark.deleted_date ~= os.date("%Y-%m-%d") then
+                -- Remove the bookmark from the data
+                table.remove(bookmarks, i)
+                vim.notify(string.format("M.saveBookmarks removed bookmark at %s in file %s", i, file), vim.log.levels.INFO)
+            end
+            i = i - 1
         end
     end
 
@@ -383,5 +401,11 @@ function M.saveBookmarks()
         utils.write_file(config.save_file, newData)
     end
 end
+
+function M.runThisOnLoad()
+    vim.notify("M.runThisOnLoad called INFO notify", vim.log.levels.INFO)
+end
+
+M.runThisOnLoad()
 
 return M

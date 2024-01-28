@@ -2,7 +2,10 @@ local uv = vim.loop
 local M = {}
 
 function M.path_exists(path)
-   return vim.loop.fs_stat(path) and true or false
+   if path then
+      return vim.loop.fs_stat(path) and true or false
+   end
+   return false
 end
 
 local jit_os
