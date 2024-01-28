@@ -276,23 +276,23 @@ M.refresh = function(bufnr)
     end
 end
 
-local function log_to_file(message)
-    -- local home_folder = vim.fcibn.expand("~")
-    local home_folder = vim.fn.getenv("HOME") or vim.fn.getenv("USERPROFILE")
-    local log_file_path = home_folder .. "/Downloads/nvim-logfile.log" -- Change this to your desired log path
-    local current_folder = vim.fn.getcwd()
-    -- Get the caller file and line number (2 levels up in the stack)
-    local info = debug.getinfo(2, "Sl")
-    local caller_info = string.format("%s:%d", info.short_src, info.currentline)
-    -- Construct the full log message
-    local full_message = string.format("[%s] [%s] %s - %s", os.date("%Y-%m-%d %H:%M:%S"), current_folder, caller_info,
-        message)
-    local file = io.open(log_file_path, "a")
-    if file then
-        file:write(full_message .. "\n")
-        file:close()
-    end
-end
+-- local function log_to_file(message)
+--     -- local home_folder = vim.fcibn.expand("~")
+--     local home_folder = vim.fn.getenv("HOME") or vim.fn.getenv("USERPROFILE")
+--     local log_file_path = home_folder .. "/Downloads/nvim-logfile.log" -- Change this to your desired log path
+--     local current_folder = vim.fn.getcwd()
+--     -- Get the caller file and line number (2 levels up in the stack)
+--     local info = debug.getinfo(2, "Sl")
+--     local caller_info = string.format("%s:%d", info.short_src, info.currentline)
+--     -- Construct the full log message
+--     local full_message = string.format("[%s] [%s] %s - %s", os.date("%Y-%m-%d %H:%M:%S"), current_folder, caller_info,
+--         message)
+--     local file = io.open(log_file_path, "a")
+--     if file then
+--         file:write(full_message .. "\n")
+--         file:close()
+--     end
+-- end
 
 function M.deep_extend_keep(target, source)
     for key, value in pairs(source) do
@@ -383,11 +383,17 @@ function M.saveBookmarks()
         -- vim.notify(string.format("M.saveBookmarks found i bookmarks: %s", vim.inspect(i)), vim.log.levels.INFO)
         for line, bookmark in pairs(bookmarks) do
             -- vim.notify(string.format("M.saveBookmarks bookmark: %s", vim.inspect(bookmark)), vim.log.levels.INFO)
-            if bookmark and bookmark.mark == "--deleted--" and bookmark.deleted_date ~= os.date("%Y-%m-%d") then
-                -- Remove the bookmark from the fileList
-                bookmarks[line] = nil
-                vim.notify(string.format("M.saveBookmarks removed bookmark at %s in file %s", line, file),
-                    vim.log.levels.INFO)
+            if bookmark and bookmark.mark == "--deleted--" then
+                -- Extract date part from datetime
+                local date_from_datetime = string.sub(bookmark.datetime, 1, 10)
+                -- Get current date
+                local current_date = os.date("%Y-%m-%d")
+                if date_from_datetime ~= current_date then
+                    -- Remove the bookmark from the fileList, and make sure that is not saved again
+                    bookmarks[line] = nil
+                    vim.notify(string.format("M.saveBookmarks removed bookmark at %s in file %s", line, file),
+                        vim.log.levels.INFO)
+                end
             end
         end
     end
@@ -401,7 +407,7 @@ end
 
 function M.runThisOnLoad()
     vim.notify("M.runThisOnLoad called INFO notify", vim.log.levels.INFO)
-    -- M.saveBookmarks()
+    M.saveBookmarks()
 end
 
 M.runThisOnLoad()
