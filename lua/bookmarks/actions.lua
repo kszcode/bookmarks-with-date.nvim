@@ -78,24 +78,10 @@ local function updateBookmarks(bufnr, lnum, mark, ann)
     -- Get the marks for the file.
     local marks = data[filepath]
 
-    -- -- Iterate over the marks.
-    -- for k, _ in pairs(marks or {}) do
-    --     -- If the mark matches the line number, set the flag to true.
-    --     if k == string.format("%05d", lnum) then
-    --         -- If the mark is empty, remove it.
-    --         if mark == "" then
-    --             marks[k] = nil
-    --         end
-    --         break
-    --     end
-    -- end
-
-    -- If the flag is false or an annotation is provided, create a new mark.
-    -- if isIns == false or ann then
     marks = marks or {}
     local bookmark = {
         mark = mark,
-        datetime = os.date("%Y-%m-%d %H:%M:%S")     -- Insert datetime
+        datetime = os.date("%Y-%m-%d %H:%M:%S") -- Insert datetime
     }
     if ann then
         bookmark.annotation = ann
@@ -103,7 +89,6 @@ local function updateBookmarks(bufnr, lnum, mark, ann)
     marks[string.format("%05d", lnum)] = bookmark
     -- end
 
-    -- Update the marks for the file in the data.
     data[filepath] = marks
 end
 
@@ -306,7 +291,7 @@ function M.deep_extend_keep(target, source)
             end
         else
             if target[key] == nil then
-                target[k] = v
+                target[key] = value
             end
         end
     end
@@ -363,8 +348,8 @@ local function pretty_print_json(input, indent)
 end
 
 function M.saveBookmarks()
-    if not config.cache then
-        vim.notify("M.saveBookmarks Error: config.cache is not initialized", vim.log.levels.ERROR)
+    if not config.cache or not config.cache.data then
+        vim.notify("M.saveBookmarks Error: config.cache is not initialized", vim.log.levels.INFO)
         return
     end
 
@@ -372,30 +357,28 @@ function M.saveBookmarks()
     M.loadBookmarks()
     -- vim.notify("M.saveBookmarks called INFO notify", vim.log.levels.INFO)
 
-    local data = config.cache
+    local fileList = config.cache
 
-    -- vim.notify("Debug data:" .. pretty_print_json(data), vim.log.levels.INFO)
+    -- vim.notify("Debug fileList:" .. pretty_print_json(fileList), vim.log.levels.INFO)
 
-    -- Iterate over each file in the data
-    for file, bookmarks in pairs(data.data) do
+    -- Iterate over each file in the fileList
+    for file, bookmarks in pairs(fileList.data) do
         -- vim.notify(string.format("M.saveBookmarks file: %s", file), vim.log.levels.INFO)
         -- vim.notify(string.format("M.saveBookmarks bookmarks: %s", vim.inspect(bookmarks)), vim.log.levels.INFO)
         -- Iterate over each bookmark in reverse order (to avoid index shifting issues)
-        local i = #bookmarks
         -- vim.notify(string.format("M.saveBookmarks found i bookmarks: %s", vim.inspect(i)), vim.log.levels.INFO)
-        while i > 0 do
-            local bookmark = bookmarks[i]
+        for line, bookmark in pairs(bookmarks) do
             -- vim.notify(string.format("M.saveBookmarks bookmark: %s", vim.inspect(bookmark)), vim.log.levels.INFO)
             if bookmark and bookmark.mark == "--deleted--" and bookmark.deleted_date ~= os.date("%Y-%m-%d") then
-                -- Remove the bookmark from the data
-                table.remove(bookmarks, i)
-                vim.notify(string.format("M.saveBookmarks removed bookmark at %s in file %s", i, file), vim.log.levels.INFO)
+                -- Remove the bookmark from the fileList
+                bookmarks[line] = nil
+                vim.notify(string.format("M.saveBookmarks removed bookmark at %s in file %s", line, file),
+                    vim.log.levels.INFO)
             end
-            i = i - 1
         end
     end
 
-    local newData = pretty_print_json(data)
+    local newData = pretty_print_json(fileList)
 
     if config.marks ~= newData then
         utils.write_file(config.save_file, newData)
@@ -404,6 +387,7 @@ end
 
 function M.runThisOnLoad()
     vim.notify("M.runThisOnLoad called INFO notify", vim.log.levels.INFO)
+    -- M.saveBookmarks()
 end
 
 M.runThisOnLoad()
