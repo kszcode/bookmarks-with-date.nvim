@@ -1,9 +1,14 @@
+-- This module provides utilities for asynchronous programming in Lua.
+-- It includes functions for creating and managing threads, as well as wrappers for executing functions asynchronously.
+-- The module also provides a scheduler function that can be used to schedule functions to be executed asynchronously using Vim's built-in scheduler.
+
 local co = coroutine
 
 local async_thread = {
    threads = {},
 }
 
+-- Converts a thread object to a string representation.
 local function threadtostring(x)
    if jit then
       return string.format("%p", x)
@@ -12,12 +17,14 @@ local function threadtostring(x)
    end
 end
 
+-- Returns the currently running thread.
 function async_thread.running()
    local thread = co.running()
    local id = threadtostring(thread)
    return async_thread.threads[id]
 end
 
+-- Creates a new thread and returns it.
 function async_thread.create(fn)
    local thread = co.create(fn)
    local id = threadtostring(thread)
@@ -25,6 +32,7 @@ function async_thread.create(fn)
    return thread
 end
 
+-- Checks if a thread has finished executing.
 function async_thread.finished(x)
    if co.status(x) == "dead" then
       local id = threadtostring(x)
@@ -34,6 +42,7 @@ function async_thread.finished(x)
    return false
 end
 
+-- Executes an asynchronous function.
 local function execute(async_fn, ...)
    local thread = async_thread.create(async_fn)
 
@@ -62,6 +71,7 @@ end
 
 local M = {}
 
+-- Wraps a function to be executed asynchronously.
 function M.wrap(func, argc)
    return function(...)
       if not async_thread.running() then
@@ -71,6 +81,7 @@ function M.wrap(func, argc)
    end
 end
 
+-- Wraps a function to be executed asynchronously without returning a value.
 function M.void(func)
    return function(...)
       if async_thread.running() then
@@ -80,6 +91,7 @@ function M.void(func)
    end
 end
 
+-- A scheduler function that can be used to schedule functions to be executed asynchronously using Vim's built-in scheduler.
 M.scheduler = M.wrap(vim.schedule, 1)
 
 return M
