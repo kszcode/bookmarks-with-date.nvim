@@ -312,7 +312,7 @@ function M.deep_extend_keep(target, source)
 end
 
 function M.loadBookmarks()
-    -- vim.notify("M.loadBookmarks called INFO notify", vim.log.levels.INFO)
+    -- vim.notify("BookmarkNvim.loadBookmarks called INFO notify", vim.log.levels.INFO)
     if utils.path_exists(config.save_file) then
         utils.read_file(config.save_file, function(data)
             local newData = vim.json.decode(data)
@@ -363,13 +363,13 @@ end
 
 function M.saveBookmarks()
     if not config.cache or not config.cache.data then
-        vim.notify("M.saveBookmarks Error: config.cache is not initialized", vim.log.levels.INFO)
+        vim.notify("BookmarkNvim.saveBookmarks Error: config.cache is not initialized", vim.log.levels.INFO)
         return
     end
 
     -- load it first to make sure we don't overwrite changes
     M.loadBookmarks()
-    -- vim.notify("M.saveBookmarks called INFO notify", vim.log.levels.INFO)
+    -- vim.notify("BookmarkNvim.saveBookmarks called INFO notify", vim.log.levels.INFO)
 
     local fileList = config.cache
 
@@ -377,12 +377,12 @@ function M.saveBookmarks()
 
     -- Iterate over each file in the fileList
     for file, bookmarks in pairs(fileList.data) do
-        -- vim.notify(string.format("M.saveBookmarks file: %s", file), vim.log.levels.INFO)
-        -- vim.notify(string.format("M.saveBookmarks bookmarks: %s", vim.inspect(bookmarks)), vim.log.levels.INFO)
+        -- vim.notify(string.format("BookmarkNvim.saveBookmarks file: %s", file), vim.log.levels.INFO)
+        -- vim.notify(string.format("BookmarkNvim.saveBookmarks bookmarks: %s", vim.inspect(bookmarks)), vim.log.levels.INFO)
         -- Iterate over each bookmark in reverse order (to avoid index shifting issues)
         -- vim.notify(string.format("M.saveBookmarks found i bookmarks: %s", vim.inspect(i)), vim.log.levels.INFO)
         for line, bookmark in pairs(bookmarks) do
-            -- vim.notify(string.format("M.saveBookmarks bookmark: %s", vim.inspect(bookmark)), vim.log.levels.INFO)
+            -- vim.notify(string.format("BookmarkNvim.saveBookmarks bookmark: %s", vim.inspect(bookmark)), vim.log.levels.INFO)
             if bookmark and bookmark.mark == "--deleted--" then
                 -- Extract date part from datetime
                 local date_from_datetime = string.sub(bookmark.datetime, 1, 10)
@@ -391,7 +391,7 @@ function M.saveBookmarks()
                 if date_from_datetime ~= current_date then
                     -- Remove the bookmark from the fileList, and make sure that is not saved again
                     bookmarks[line] = nil
-                    vim.notify(string.format("M.saveBookmarks removed bookmark at %s in file %s", line, file),
+                    vim.notify(string.format("BookmarkNvim.saveBookmarks removed bookmark at %s in file %s", line, file),
                         vim.log.levels.INFO)
                 end
             end
@@ -406,8 +406,8 @@ function M.saveBookmarks()
 end
 
 function M.runThisOnLoad()
-    vim.notify("M.runThisOnLoad called INFO notify", vim.log.levels.INFO)
-    M.saveBookmarks()
+    -- vim.notify("BookmarkNvim.runThisOnLoad called INFO notify", vim.log.levels.INFO)
+    -- M.saveBookmarks()
 end
 
 M.runThisOnLoad()
