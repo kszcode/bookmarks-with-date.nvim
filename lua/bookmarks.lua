@@ -47,7 +47,7 @@ end
 -- If no buffer number is provided, the current buffer is used.
 -- Loads bookmarks and calls the on_attach function if provided in the configuration.
 -- Attaches an autocmd event for detaching the bookmark system when the buffer is detached.
-local attach = void(function(bufnr)
+M.attach = void(function(bufnr)
    bufnr = bufnr or current_buf()
    scheduler()
    actions.loadBookmarks()
@@ -63,7 +63,7 @@ end)
 -- Detaches the bookmark system from a buffer.
 -- If no buffer number is provided, the current buffer is used.
 -- Detaches the bookmark system from the buffer and saves the bookmarks.
-local detach_all = void(function(bufnr)
+M.detach_all = void(function(bufnr)
    bufnr = bufnr or current_buf()
    scheduler()
    actions.detach(bufnr)
@@ -88,15 +88,15 @@ end
 -- Builds the configuration, sets up actions, and creates the "bookmarks" augroup.
 -- Attaches autocmd events for detaching bookmarks, setting up highlights,
 -- attaching bookmarks, and refreshing bookmarks.
-local setup = void(function(cfg)
+M.setup = void(function(cfg)
    config.build(cfg)
    actions.setup()
    nvim.augroup "bookmarks"
-   autocmd("VimLeavePre", detach_all)
+   autocmd("VimLeavePre", M.detach_all)
    autocmd("ColorScheme", hl.setup_highlights)
    on_or_after_vimenter(function()
       hl.setup_highlights()
-      attach()
+      M.attach()
       autocmd("FocusGained", actions.refresh)
       autocmd("BufReadPost", actions.refresh)
    end)
