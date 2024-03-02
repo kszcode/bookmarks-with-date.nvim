@@ -78,7 +78,6 @@ local function updateBookmarks(bufnr, lnum, mark, ann)
     -- Get the marks for the file.
     local marks = data[filepath]
 
-    -- -- Iterate over the marks.
     -- for k, _ in pairs(marks or {}) do
     --     -- If the mark matches the line number, set the flag to true.
     --     if k == string.format("%05d", lnum) then
@@ -143,10 +142,22 @@ M.bookmark_clean = function()
     updateBookmarks(bufnr, -1, "")
 end
 
+-- This function is used to bookmark a specific line in a buffer.
+-- If no buffer number is provided, it defaults to the current buffer.
+-- It returns the bookmark for the specified line, or all bookmarks for the buffer if no line number is provided.
 M.bookmark_line = function(lnum, bufnr)
+    -- If no buffer number is provided, use the current buffer.
     bufnr = bufnr or current_buf()
+
+    -- Get the real path of the file associated with the buffer.
     local file = uv.fs_realpath(api.nvim_buf_get_name(bufnr))
+
+    -- Get the bookmarks for the file from the cache, or use an empty table if there are no bookmarks.
     local marks = config.cache["data"][file] or {}
+
+    -- If a line number is provided, return the bookmark for that line.
+    -- The line number is formatted as a five-digit string (padded with zeros on the left if necessary).
+    -- If no line number is provided, return all bookmarks for the file.
     return lnum and marks[string.format("%05d", lnum)] or marks
 end
 
@@ -194,6 +205,7 @@ local jump_line = function(prev)
         table.sort(tmp)
         lnum = tmp[1]
     end
+    -- make sure if lnum is outside the buffer then just load the last line
     if lnum then
         api.nvim_win_set_cursor(0, { lnum, 0 })
         local mark = marks[tostring(lnum)]
@@ -212,12 +224,15 @@ M.bookmark_next = function()
     jump_line(false)
 end
 
+-- This function is used to create a list of all bookmarks.
 M.bookmark_list = function()
+    -- Get all bookmarks from the cache.
     local allmarks = config.cache.data
     local marklist = {}
 
     -- Remove invalid file paths from allmarks
     for k, _ in pairs(allmarks) do
+        -- If the file path does not exist, remove it from allmarks.
         if not utils.path_exists(k) then
             allmarks[k] = nil
         end
@@ -225,28 +240,33 @@ M.bookmark_list = function()
 
     -- Create marklist with filename, line number, and text
     for k, ma in pairs(allmarks) do
+        -- For each bookmark in the file, create an entry in marklist.
         for l, v in pairs(ma) do
+            -- Get the mark text, or use an empty string if there is no mark.
             local m = v.mark or v.m or ""
-            -- remove the surrounding white space
+            -- Remove the surrounding white space from the mark text.
             m = string.gsub(m, "^%s*(.-)%s*$", "%1")
+            -- Get the annotation text, or use an empty string if there is no annotation.
             local a = v.annotation or v.a or ""
+            -- Get the datetime text, or use an empty string if there is no datetime.
             local datetime = v.datetime or ""
-            -- local text = datetime .. "->" .. a .. " -> " .. m
+            -- Create the text for the bookmark entry.
             local text = datetime
             if a ~= "" then
                 text = text .. " -a> " .. a
             end
             text = text .. " -m> " .. m
+            -- Add the bookmark entry to marklist.
             table.insert(marklist, { filename = k, lnum = tonumber(l, 10), text = text })
         end
     end
 
-    -- sort the marklist by text in desc order
+    -- Sort the marklist by text in descending order.
     table.sort(marklist, function(a, b)
         return a.text > b.text
     end)
 
-    -- Set the quickfix list with marklist
+    -- Set the quickfix list with marklist.
     utils.setqflist(marklist)
 end
 
