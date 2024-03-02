@@ -448,13 +448,62 @@ function M.saveBookmarks()
 
 
     M.convertAndSaveBookmarksRecentFirst()
-
 end
 
-local function datetime_to_relative(datetime)
-    -- Convert datetime to relative time string, e.g., "3h 2min ago"
-    -- Placeholder implementation. Actual conversion logic will depend on specific requirements.
-    return datetime -- This should be replaced with actual conversion logic.
+local function parse_datetime_to_table(datetime_str)
+    local year, month, day, hour, min, sec = datetime_str:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
+    return {
+        year = tonumber(year),
+        month = tonumber(month),
+        day = tonumber(day),
+        hour = tonumber(hour),
+        min = tonumber(min),
+        sec = tonumber(sec)
+    }
+end
+
+-- This function should convert an absolute datetime string to a relative format (e.g., "3h 2min ago")
+-- You'll need to calculate the difference between the current time and the datetime, then format it.
+-- For simplicity, let's just return a mock string, but you should replace this with actual logic.
+local function datetime_to_relative(datetime_str)
+    local datetime_table = parse_datetime_to_table(datetime_str)
+    local datetime_sec = os.time(datetime_table)
+    local current_sec = os.time()
+    local diff_sec = os.difftime(current_sec, datetime_sec)
+
+    if diff_sec < 60 then
+        return "just now"
+    elseif diff_sec < 3600 then -- Less than an hour
+        local minutes = math.floor(diff_sec / 60)
+        return minutes .. "min ago"
+    elseif diff_sec < 86400 then -- Less than a day
+        local hours = math.floor(diff_sec / 3600)
+        local minutes = math.floor((diff_sec % 3600) / 60)
+        return string.format("%dh %dmin ago", hours, minutes)
+    else
+        local days = math.floor(diff_sec / 86400)
+        local hours = math.floor((diff_sec % 86400) / 3600)
+        return string.format("%dd %dh ago", days, hours)
+    end
+end
+
+
+local function pretty_print_json_custom_recent_date_files_list(input)
+    local parts = {}
+    table.insert(parts, "{\n")
+    for datetime, details in pairs(input) do
+        -- Serialize each bookmark entry
+        local entry = string.format('    "%s": {\n', datetime)
+        entry = entry .. string.format('        "file": "%s",\n', details.file)
+        entry = entry .. string.format('        "line": %d,\n', details.line)
+        entry = entry .. string.format('        "mark": "%s",\n', details.mark)
+        entry = entry .. string.format('        "annotation": "%s",\n', details.annotation or "")
+        entry = entry .. string.format('        "relativeTime": "%s"\n', details.relativeTime)
+        entry = entry .. "    }"
+        table.insert(parts, entry)
+    end
+    table.insert(parts, "}\n")
+    return table.concat(parts, ",\n")
 end
 
 function M.convertAndSaveBookmarksRecentFirst()
@@ -473,7 +522,7 @@ function M.convertAndSaveBookmarksRecentFirst()
                 file = file,
                 line = tonumber(line),
                 mark = bookmark.mark,
-                annotation = bookmark.mark, -- Assuming the mark itself is used as the annotation
+                annotation = bookmark.mark,     -- Assuming the mark itself is used as the annotation
                 relativeTime = datetimeRelative -- Additional field to store the relative time
             }
         end
