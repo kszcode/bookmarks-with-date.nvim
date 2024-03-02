@@ -496,7 +496,7 @@ local function pretty_print_json_custom_recent_date_files_list(input)
         entry = entry .. string.format('        "file_line": "%s",\n', details.file_line)
         entry = entry .. string.format('        "mark": "%s",\n', escape_string(details.mark))
         entry = entry .. string.format('        "annotation": "%s",\n', escape_string(details.annotation or ""))
-        entry = entry .. string.format('        "relativeTime": "%s"\n', details.relativeTime)
+        -- entry = entry .. string.format('        "relativeTime": "%s"\n', details.relativeTime)
         entry = entry .. "    }"
         table.insert(parts, entry)
     end
