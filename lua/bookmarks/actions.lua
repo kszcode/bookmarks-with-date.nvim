@@ -490,71 +490,64 @@ end
 
 local function pretty_print_json_custom_recent_date_files_list(input)
     local parts = {}
-    table.insert(parts, "{\n")
     for datetime, details in pairs(input) do
         -- Serialize each bookmark entry
         local entry = string.format('    "%s": {\n', datetime)
-        entry = entry .. string.format('        "file_line": "%s:%d",\n', details.file, details.line)
+        entry = entry .. string.format('        "file_line": "%s",\n', details.file_line)
         entry = entry .. string.format('        "mark": "%s",\n', escape_string(details.mark))
-        entry = entry .. string.format('        "annotation": "%s",\n', details.annotation or "")
+        entry = entry .. string.format('        "annotation": "%s",\n', escape_string(details.annotation or ""))
         entry = entry .. string.format('        "relativeTime": "%s"\n', details.relativeTime)
         entry = entry .. "    }"
         table.insert(parts, entry)
     end
-    table.insert(parts, "}\n")
-    return table.concat(parts, ",\n")
+    local entries = table.concat(parts, ",\n")
+    local jsonOutput = "{\n" .. entries .. "\n}"
+    return jsonOutput
 end
 
 -- This function is used to convert and save bookmarks in a format where the most recent bookmarks are listed first.
 function M.convertAndSaveBookmarksRecentFirst()
-    -- Check if the cache is initialized. If not, notify the user and return.
     if not config.cache or not config.cache.data then
         vim.notify("convertAndSaveBookmarksRecentFirst Error: config.cache is not initialized", vim.log.levels.INFO)
         return
     end
 
-    -- Get the bookmarks data from the cache.
     local bookmarksData = config.cache.data
-    -- Initialize a table to store the transformed data.
     local transformedData = {}
 
-    -- Iterate over each file and its bookmarks.
+    -- Transform data into a sortable structure
     for file, bookmarks in pairs(bookmarksData) do
-        -- Iterate over each line and its bookmark.
         for line, bookmark in pairs(bookmarks) do
-            -- Convert the bookmark's datetime to a relative time.
             local datetimeRelative = datetime_to_relative(bookmark.datetime)
-            -- Add the bookmark to the transformed data, using the datetime as the key.
-            -- The bookmark is stored as a table with fields for the file, line, mark, annotation, and relative time.
-            transformedData[bookmark.datetime] = {
-                file = file,
-                line = tonumber(line),
+            local timestamp = os.time(parse_datetime_to_table(bookmark.datetime))
+            table.insert(transformedData, {
+                timestamp = timestamp, -- for sorting
+                datetime = bookmark.datetime, -- original datetime string
+                file_line = file .. ":" .. tostring(line),
                 mark = bookmark.mark,
-                annotation = bookmark.mark,     -- Assuming the mark itself is used as the annotation
-                relativeTime = datetimeRelative -- Additional field to store the relative time
-            }
+                annotation = bookmark.annotation or "",
+                relativeTime = datetimeRelative
+            })
         end
     end
 
-    -- Sort the keys of the transformed data (the datetimes) in descending order.
-    local sortedKeys = {}
-    for datetime in pairs(transformedData) do
-        table.insert(sortedKeys, datetime)
-    end
-    table.sort(sortedKeys, function(a, b) return a > b end)
+    -- Sort by timestamp in descending order
+    table.sort(transformedData, function(a, b) return a.timestamp > b.timestamp end)
 
-    -- Create a new table where the bookmarks are sorted by datetime in descending order.
+    -- Now, create a JSON structure
     local sortedData = {}
-    for _, datetime in ipairs(sortedKeys) do
-        -- Create a key by concatenating the datetime and the relative time.
-        local key = datetime -- .. " -- " .. transformedData[datetime].relativeTime
-        -- Add the bookmark to the sorted data, using the new key.
-        sortedData[key] = transformedData[datetime]
+    for _, item in ipairs(transformedData) do
+        local key = item.datetime .. " -- " .. item.relativeTime
+        sortedData[key] = {
+            file_line = item.file_line,
+            mark = escape_string(item.mark),
+            annotation = escape_string(item.annotation),
+            relativeTime = item.relativeTime
+        }
     end
 
-    -- Convert the sorted data to JSON and pretty print it.
+    -- Convert to JSON
     local newDataJson = pretty_print_json_custom_recent_date_files_list(sortedData)
-    -- Write the JSON to a file, appending "_recent-first.json" to the save file name.
     utils.write_file(config.save_file .. "_recent-first.json", newDataJson)
 end
 
