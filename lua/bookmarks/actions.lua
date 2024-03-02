@@ -490,9 +490,9 @@ end
 
 local function pretty_print_json_custom_recent_date_files_list(input)
     local parts = {}
-    for datetime, details in pairs(input) do
+    for k, details in pairs(input) do
         -- Serialize each bookmark entry
-        local entry = string.format('    "%s": {\n', datetime)
+        local entry = string.format('    "%s -- %s": {\n', details.datetime, details.relativeTime)
         entry = entry .. string.format('        "file_line": "%s",\n', details.file_line)
         entry = entry .. string.format('        "mark": "%s",\n', escape_string(details.mark))
         entry = entry .. string.format('        "annotation": "%s",\n', escape_string(details.annotation or ""))
@@ -534,20 +534,8 @@ function M.convertAndSaveBookmarksRecentFirst()
     -- Sort by timestamp in descending order
     table.sort(transformedData, function(a, b) return a.timestamp > b.timestamp end)
 
-    -- Now, create a JSON structure
-    local sortedData = {}
-    for _, item in ipairs(transformedData) do
-        local key = item.datetime .. " -- " .. item.relativeTime
-        sortedData[key] = {
-            file_line = item.file_line,
-            mark = escape_string(item.mark),
-            annotation = escape_string(item.annotation),
-            relativeTime = item.relativeTime
-        }
-    end
-
     -- Convert to JSON
-    local newDataJson = pretty_print_json_custom_recent_date_files_list(sortedData)
+    local newDataJson = pretty_print_json_custom_recent_date_files_list(transformedData)
     utils.write_file(config.save_file .. "_recent-first.json", newDataJson)
 end
 
