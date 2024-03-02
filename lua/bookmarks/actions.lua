@@ -224,6 +224,19 @@ M.bookmark_next = function()
     jump_line(false)
 end
 
+local function expandPath(path)
+    -- Check if the path starts with a tilde
+    if path:sub(1, 1) == '~' then
+        -- Get the HOME environment variable
+        local home = os.getenv("HOME")
+        if home then
+            -- Replace the tilde with the home directory path
+            path = home .. path:sub(2)
+        end
+    end
+    return path
+end
+
 -- This function is used to create a list of all bookmarks.
 M.bookmark_list = function()
     -- Get all bookmarks from the cache.
@@ -231,13 +244,20 @@ M.bookmark_list = function()
     local marklist = {}
 
     -- Remove invalid file paths from allmarks
-    for k, _ in pairs(allmarks) do
+    for k, v in pairs(allmarks) do
+        -- but first make sure that the path is expanded
+        local fullPathKey = expandPath(k)
+        if fullPathKey ~= k then      -- If the path was expanded
+            allmarks[fullPathKey] = v -- Update with the full path
+            allmarks[k] = nil         -- Remove the old entry
+        end
         -- If the file path does not exist, remove it from allmarks.
-        if not utils.path_exists(k) then
+        if not utils.path_exists(fullPathKey) then
             allmarks[k] = nil
         end
     end
 
+    print("bookmark_list: " .. vim.inspect(allmarks))
     -- Create marklist with filename, line number, and text
     for k, ma in pairs(allmarks) do
         -- For each bookmark in the file, create an entry in marklist.
@@ -256,8 +276,10 @@ M.bookmark_list = function()
                 text = text .. " -a> " .. a
             end
             text = text .. " -m> " .. m
+            lineNumber = tonumber(l, 10)
             -- Add the bookmark entry to marklist.
-            table.insert(marklist, { filename = k, lnum = tonumber(l, 10), text = text })
+            print("bookmark_list: " .. k .. ":" .. lineNumber .. ":" .. text)
+            table.insert(marklist, { filename = k, lnum = lineNumber, text = text })
         end
     end
 
@@ -358,7 +380,7 @@ local function escape_string(str)
     return str:gsub('["\\\n\r\t]', escapes)
 end
 
-local function pretty_print_json(input, indent)
+local function pretty_print_json_custom_file_list(input, indent)
     indent = indent or 0
     local indent_str1 = string.rep(" ", indent)
     local indent_str2 = string.rep(" ", indent + 2)
@@ -372,7 +394,7 @@ local function pretty_print_json(input, indent)
         local v = input[k]
         local kv_pair = indent_str2 .. '"' .. escape_string(k) .. '": '
         if type(v) == "table" then
-            kv_pair = kv_pair .. pretty_print_json(v, indent + 2)
+            kv_pair = kv_pair .. pretty_print_json_custom_file_list(v, indent + 2)
         else
             kv_pair = kv_pair .. '"' .. escape_string(tostring(v)) .. '"'
         end
@@ -393,7 +415,7 @@ function M.saveBookmarks()
 
     local fileList = config.cache
 
-    -- vim.notify("Debug fileList:" .. pretty_print_json(fileList), vim.log.levels.INFO)
+    -- vim.notify("Debug fileList:" .. pretty_print_json_custom_file_list(fileList), vim.log.levels.INFO)
 
     -- Iterate over each file in the fileList
     for file, bookmarks in pairs(fileList.data) do
@@ -418,11 +440,61 @@ function M.saveBookmarks()
         end
     end
 
-    local newData = pretty_print_json(fileList)
+    local newData = pretty_print_json_custom_file_list(fileList)
 
     if config.marks ~= newData then
         utils.write_file(config.save_file, newData)
     end
+
+
+    M.convertAndSaveBookmarksRecentFirst()
+
+end
+
+local function datetime_to_relative(datetime)
+    -- Convert datetime to relative time string, e.g., "3h 2min ago"
+    -- Placeholder implementation. Actual conversion logic will depend on specific requirements.
+    return datetime -- This should be replaced with actual conversion logic.
+end
+
+function M.convertAndSaveBookmarksRecentFirst()
+    if not config.cache or not config.cache.data then
+        vim.notify("convertAndSaveBookmarksRecentFirst Error: config.cache is not initialized", vim.log.levels.INFO)
+        return
+    end
+
+    local bookmarksData = config.cache.data
+    local transformedData = {}
+
+    for file, bookmarks in pairs(bookmarksData) do
+        for line, bookmark in pairs(bookmarks) do
+            local datetimeRelative = datetime_to_relative(bookmark.datetime)
+            transformedData[bookmark.datetime] = {
+                file = file,
+                line = tonumber(line),
+                mark = bookmark.mark,
+                annotation = bookmark.mark, -- Assuming the mark itself is used as the annotation
+                relativeTime = datetimeRelative -- Additional field to store the relative time
+            }
+        end
+    end
+
+    -- Sort the transformed data by datetime in descending order
+    local sortedKeys = {}
+    for datetime in pairs(transformedData) do
+        table.insert(sortedKeys, datetime)
+    end
+    table.sort(sortedKeys, function(a, b) return a > b end)
+
+    local sortedData = {}
+    for _, datetime in ipairs(sortedKeys) do
+        local key = datetime .. " -- " .. transformedData[datetime].relativeTime
+        sortedData[key] = transformedData[datetime]
+    end
+
+    -- Save the transformed and sorted data
+    local newDataJson = pretty_print_json_custom_recent_date_files_list(sortedData)
+    utils.write_file(config.save_file .. "_recent-first.json", newDataJson)
 end
 
 function M.runThisOnLoad()
