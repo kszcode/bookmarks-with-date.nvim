@@ -344,10 +344,10 @@ function M.deep_extend_keep(target, source)
             else
                 target[key] = value
             end
-        else
-            if target[key] == nil then
-                target[k] = v
-            end
+        -- else
+            -- if target[key] == nil then
+           --     target[key] = value
+            -- end
         end
     end
     return target
@@ -478,21 +478,22 @@ local function datetime_to_relative(datetime_str)
         return minutes .. "min ago"
     elseif diff_sec < 86400 then -- Less than a day
         local hours = math.floor(diff_sec / 3600)
-        local minutes = math.floor((diff_sec % 3600) / 60)
-        return string.format("%dh %dmin ago", hours, minutes)
+        -- local minutes = math.floor((diff_sec % 3600) / 60)
+        return string.format("%dh ago", hours)
     else
         local days = math.floor(diff_sec / 86400)
-        local hours = math.floor((diff_sec % 86400) / 3600)
-        return string.format("%dd %dh ago", days, hours)
+        -- local hours = math.floor((diff_sec % 86400) / 3600)
+        return string.format("%dd ago", days)
     end
 end
 
 
 local function pretty_print_json_custom_recent_date_files_list(input)
     local parts = {}
-    for k, details in pairs(input) do
+    for _, details in pairs(input) do
         -- Serialize each bookmark entry
-        local entry = string.format('    "%s -- %s": {\n', details.datetime, details.relativeTime)
+        -- local entry = string.format('    "%s -- %s": {\n', details.datetime, details.relativeTime)
+        local entry = string.format('    "%s": {\n', details.datetime)
         entry = entry .. string.format('        "file_line": "%s",\n', details.file_line)
         entry = entry .. string.format('        "mark": "%s",\n', escape_string(details.mark))
         entry = entry .. string.format('        "annotation": "%s",\n', escape_string(details.annotation or ""))
